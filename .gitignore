@@ -1,0 +1,16 @@
+# Ignore build results
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Ignore Visual Studio config files
+.vs/
+.vscode/
+
+# Rider IDE config files
+.idea/
