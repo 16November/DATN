@@ -49,9 +49,9 @@ namespace DoAnTotNghiep.Repository.Repositories
 
         public async Task<UserInfo> GetDetailUserInfoAsync(Guid userId)
         {
-            var userInfo = await dataContext.UserInfos.FirstOrDefaultAsync(x=> x.UserId == userId);
+            var userInfo = await dataContext.UserInfos.FirstOrDefaultAsync(x => x.UserId == userId);
 
-            if(userInfo == null)
+            if (userInfo == null)
             {
                 throw new KeyNotFoundException("Not found UserInfo");
             }

@@ -16,31 +16,31 @@ namespace DoAnTotNghiep.Controllers
             this.questionService = questionService;
         }
 
-        // GET: api/question/exam/{examId}
-        [HttpGet("exam/{examId}")]
-        public async Task<IActionResult> GetQuestionsByExamId(Guid examId)
+        [HttpGet]
+        [Route("getByExamId")]
+        public async Task<IActionResult> GetQuestionsByExamId([FromQuery]Guid examId)
         {
             var result = await questionService.GetListQuestionByExamId(examId);
             return Ok(result);
         }
 
-        // GET: api/question/detail/{questionId}
-        [HttpGet("detail/{questionId}")]
-        public async Task<IActionResult> GetQuestionDetail(Guid questionId)
+        [HttpGet]
+        [Route("getDetail")]
+        public async Task<IActionResult> GetQuestionDetail([FromQuery]Guid questionId)
         {
             var result = await questionService.GetQuestionDetailByQuestionId(questionId);
             return Ok(result);
         }
 
-        // GET: api/question/user/exam/{examId}
-        [HttpGet("user/exam/{examId}")]
-        public async Task<IActionResult> GetQuestionForUser(Guid examId)
+        [HttpGet]
+        [Route("getExamUser")]
+        public async Task<IActionResult> GetQuestionForUser([FromQuery] Guid examId)
         {
             var result = await questionService.GetListQuestionByExamIdUser(examId);
             return Ok(result);
         }
 
-        // POST: api/question
+        
         [HttpPost]
         public async Task<IActionResult> AddQuestion([FromBody] RequestQuestion request)
         {
@@ -48,17 +48,19 @@ namespace DoAnTotNghiep.Controllers
             return Ok(new { message = "Câu hỏi đã được thêm thành công." });
         }
 
-        // PUT: api/question/{questionId}
-        [HttpPut("{questionId}")]
-        public async Task<IActionResult> UpdateQuestion(Guid questionId, [FromBody] RequestQuestion request)
+        
+        [HttpPut]
+        [Route("update")]
+        public async Task<IActionResult> UpdateQuestion([FromQuery] Guid questionId, [FromBody] RequestQuestion request)
         {
             await questionService.UpdateQuestionAsync(questionId, request);
             return Ok(new { message = "Câu hỏi đã được cập nhật thành công." });
         }
 
-        // DELETE: api/question/{questionId}
-        [HttpDelete("{questionId}")]
-        public async Task<IActionResult> DeleteQuestion(Guid questionId)
+        
+        [HttpDelete]
+        [Route("delete")]
+        public async Task<IActionResult> DeleteQuestion([FromQuery]Guid questionId)
         {
             await questionService.DeleteQuestion(questionId);
             return Ok(new { message = "Câu hỏi đã được xóa thành công." });
