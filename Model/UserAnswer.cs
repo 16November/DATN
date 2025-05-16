@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DoAnTotNghiep.Model
 {
@@ -7,19 +8,25 @@ namespace DoAnTotNghiep.Model
         [Key]
         public Guid UserAnswerId { get; set; }
 
+        [Required]
         public Guid AnswerId { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public Guid UserId  { get; set; }
+        [Required]
+        public Guid UserId { get; set; }
 
-        public Guid QuestionId  { get; set; }
+        [Required]
+        public Guid QuestionId { get; set; }
 
+        [ForeignKey("QuestionId")]
         public Question? Question { get; set; }
 
-
+        [ForeignKey("UserId")]
         public User? User { get; set; }
 
+        [ForeignKey("AnswerId")]
         public Answer? Answer { get; set; }
     }
 }

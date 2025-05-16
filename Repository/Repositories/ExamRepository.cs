@@ -18,7 +18,7 @@ namespace DoAnTotNghiep.Repository.Repositories
         //Get ExamId
         public async Task<Exam> GetExamByExamIdAsync(Guid examId)
         {
-            var exam = await dataContext.Exams
+            var exam = await dataContext.Exams.Include(x=>x.Questions)
                         .FirstOrDefaultAsync(x=> x.ExamId == examId);
 
             if (exam == null)
@@ -32,11 +32,10 @@ namespace DoAnTotNghiep.Repository.Repositories
         //Ap dung Giang Vien Nguoi Ra de
         public async Task<List<Exam>> GetAllExamByManagerAsync(Guid userId,int page)
         {
-            int take = 10;
+            int take = 5;
             int skip = (page - 1) * take;
             var exams = await dataContext.Exams.
-                                Where(x => x.CreatedByUserId == userId).
-                                OrderBy(p => p.ExamId)
+                                Where(x => x.CreatedByUserId == userId).OrderByDescending(x => x.CreatedAt)
                                 .Skip(skip).Take(take).ToListAsync();
 
             if (exams == null)
@@ -50,19 +49,29 @@ namespace DoAnTotNghiep.Repository.Repositories
 
         public async Task DeleteExamByExamIdAsync(Guid examId)
         {
-            var exam = await dataContext.Exams.
-                            Include(x=> x.Questions).FirstOrDefaultAsync(x => x.ExamId == examId);
+            var exam = await dataContext.Exams
+                    .Include(x => x.Questions)
+                        .ThenInclude(q => q.Answers)
+                    .Include(x => x.UserExams)
+                    .FirstOrDefaultAsync(x => x.ExamId == examId);
 
             if (exam == null)
             {
-                throw new KeyNotFoundException("Not find data to Delete");
+                throw new KeyNotFoundException("Không tìm thấy đề thi cần xóa.");
             }
 
-            if (exam.Questions!.Any())
+            // Lấy danh sách QuestionId trong đề thi
+            var questionIds = exam.Questions.Select(q => q.QuestionId).ToList();
+
+            // Kiểm tra xem có UserAnswer liên quan không
+            var hasUserAnswers = await dataContext.UserAnswers
+                                    .AnyAsync(ua => questionIds.Contains(ua.QuestionId));
+
+            if (hasUserAnswers)
             {
-                throw new InvalidOperationException("Không thể xóa đề thi vì có bài làm liên quan.");
+                throw new InvalidOperationException("Không thể xóa đề thi vì có bài làm của sinh viên liên quan.");
             }
-            
+
             dataContext.Exams.Remove(exam);
         }
 
@@ -72,7 +81,7 @@ namespace DoAnTotNghiep.Repository.Repositories
 
             if (exam == null)
             {
-                throw new KeyNotFoundException("Not find data to Delete");
+                throw new KeyNotFoundException("Not find data to Update");
             }
 
             exam.Title = examUpdate.Title;
@@ -80,8 +89,7 @@ namespace DoAnTotNghiep.Repository.Repositories
             exam.DurationInMinutes = examUpdate.DurationInMinutes;
             exam.StartDay = examUpdate.StartDay;
             exam.UpdatedAt = examUpdate.UpdatedAt;
-
-
+            exam.IsPublished = examUpdate.IsPublished;
         }
 
         public async Task UpdatePublishedByExamId(Guid examId, bool isPublished)
@@ -90,7 +98,7 @@ namespace DoAnTotNghiep.Repository.Repositories
 
             if(exam == null)
             {
-                throw new KeyNotFoundException("Not find data to Delete");
+                throw new KeyNotFoundException("Not find data to Update");
             }
 
             exam.IsPublished = isPublished;
@@ -98,11 +106,12 @@ namespace DoAnTotNghiep.Repository.Repositories
 
         }
 
-        public async Task AddExamAsync(Exam exam)
+        public async Task<Exam> AddExamAsync(Exam exam)
         {
             try
             {
                 await dataContext.Exams.AddAsync(exam);
+                return exam;
             }
             catch (DbUpdateException dbEx)
             {

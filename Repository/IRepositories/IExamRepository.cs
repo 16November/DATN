@@ -5,7 +5,7 @@ namespace DoAnTotNghiep.Repository.IRepositories
 {
     public interface IExamRepository
     {
-        Task AddExamAsync(Exam exam);
+        Task<Exam> AddExamAsync(Exam exam);
 
         Task UpdatePublishedByExamId(Guid examId, bool isPublished);
 

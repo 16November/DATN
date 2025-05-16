@@ -45,12 +45,12 @@ namespace DoAnTotNghiep.Services.Service
             if (!request.Answers.Any(a => a.IsCorrect))
                 throw new ArgumentException("Phải có ít nhất một đáp án đúng.");
 
-            var duplicateIds = request.Answers.GroupBy(a => a.AnswerId)
-                                              .Where(g => g.Count() > 1)
-                                              .Select(g => g.Key)
-                                              .ToList();
-            if (duplicateIds.Any())
-                throw new ArgumentException("Có đáp án bị trùng AnswerId.");
+            //var duplicateIds = request.Answers.GroupBy(a => a.AnswerId)
+            //                                  .Where(g => g.Count() > 1)
+            //                                  .Select(g => g.Key)
+            //                                  .ToList();
+            //if (duplicateIds.Any())
+            //    throw new ArgumentException("Có đáp án bị trùng AnswerId.");
         }
 
         public async Task UpdateQuestionAsync(Guid questionId, RequestQuestion questionUpdate)
@@ -103,7 +103,8 @@ namespace DoAnTotNghiep.Services.Service
                 var answers = mapper.Map<List<Answer>>(requestQuestion.Answers);
                 foreach (var answer in answers)
                 {
-                    answer.AnswerId = (Guid)SequentialSqlGuidGenerator.Instance.NewSqlGuid(); 
+                    answer.AnswerId = (Guid)SequentialSqlGuidGenerator.Instance.NewSqlGuid();
+                    answer.QuestionId = question.QuestionId;
                 }
 
                 await answerRepository.AddListAnswerAsync(answers);

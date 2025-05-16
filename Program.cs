@@ -2,6 +2,9 @@ using DoAnTotNghiep.Data;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
 using DoAnTotNghiep.Repository.Repositories;
+using DoAnTotNghiep.Service.Service;
+using DoAnTotNghiep.Services.IService;
+using DoAnTotNghiep.Services.Service;
 using DoAnTotNghiep.Support;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
@@ -22,14 +25,30 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-//Add Logger
+// Add Serilog Logger
 var logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .MinimumLevel.Debug()
-                .CreateLogger();
+    .WriteTo.Console()
+    .MinimumLevel.Debug()
+    .CreateLogger();
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
 //Connection to Database
 builder.Services.AddDbContext<DataContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DataContext")));
+
+//Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Thêm domain frontend
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+
+
 
 //Add Authentication JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -73,9 +92,9 @@ builder.Services.AddIdentityCore<User>()
     .AddDefaultTokenProviders();
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 8;
 
@@ -97,6 +116,12 @@ builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
 
 
 //Add Scoped Services
+builder.Services.AddScoped<IUserAnswerService, UserAnswerService>();
+builder.Services.AddScoped<IUserInfoService, UserInfoService>();
+builder.Services.AddScoped<IUserExamService, UserExamService>();
+builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 
 
@@ -119,9 +144,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseCors("AllowFrontend");
 app.MapControllers();
 
 app.Run();

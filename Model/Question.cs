@@ -16,6 +16,7 @@ namespace DoAnTotNghiep.Model
 
         public Exam? Exam { get; set; }
 
-        public ICollection<Answer>? Answers { get; set; }
+        public ICollection<Answer> Answers { get; set; } = new List<Answer>(); // Khởi tạo collection
+        public ICollection<UserAnswer> UserAnswers { get; set; } = new List<UserAnswer>(); // Khởi tạo collection
     }
 }

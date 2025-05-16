@@ -3,12 +3,13 @@ using DoAnTotNghiep.Data;
 using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
+using DoAnTotNghiep.Services.IService;
 using Microsoft.VisualBasic;
 using SequentialGuid;
 
 namespace DoAnTotNghiep.Services.Service
 {
-    public class UserAnswerService
+    public class UserAnswerService : IUserAnswerService
     {
         private readonly IUserAnswerRepository userAnswerRepository;
         private readonly IMapper mapper;

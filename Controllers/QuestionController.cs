@@ -42,6 +42,7 @@ namespace DoAnTotNghiep.Controllers
 
         
         [HttpPost]
+        [Route("add")]
         public async Task<IActionResult> AddQuestion([FromBody] RequestQuestion request)
         {
             await questionService.AddQuestionAsync(request);

@@ -14,7 +14,8 @@ namespace DoAnTotNghiep.Support
             CreateMap<Exam, ExamDto>().ReverseMap();
 
             //Question
-            CreateMap<Question, RequestQuestion>().ReverseMap();
+            CreateMap<RequestQuestion,Question>()
+                    .ForMember(dest => dest.Answers, opt => opt.Ignore());
             CreateMap<Question, QuestionDto>()
                 .ForMember(dest => dest.AnswersDto,opt => opt.MapFrom(src => src.Answers));
             CreateMap<Question, QuestionUserDto>()

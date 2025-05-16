@@ -20,6 +20,8 @@ namespace DoAnTotNghiep.Dto.Request
 
         public DateTime StartDay { get; set; }
 
+        public bool IsPublished { get; set; }
+
         [Required]
         public Guid CreatedByUserId { get; set; } // Giảng viên tạo đề
 

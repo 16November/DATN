@@ -2,6 +2,7 @@
 using DoAnTotNghiep.Services.IService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace DoAnTotNghiep.Controllers
 {
@@ -20,21 +21,21 @@ namespace DoAnTotNghiep.Controllers
         [Route("add")]
         public async Task<IActionResult> AddExam([FromBody] RequestExam requestExam)
         {
-            await examService.AddExam(requestExam);
-            return Ok(new { message = "Exam created successfully" });
+            var exam = await examService.AddExam(requestExam);
+            return Ok(exam);
         }
 
         [HttpDelete]
-        [Route("delete/{id:guid}")]
-        public async Task<IActionResult> DeleteExam([FromRoute]Guid examId)
+        [Route("delete")]
+        public async Task<IActionResult> DeleteExam([FromQuery]Guid examId)
         {
             await examService.DeleteExam(examId);
             return Ok(new { message = "Exam deleted successfully" });
         }
 
         [HttpPut]
-        [Route("updateExam/{id:guid}")]
-        public async Task<IActionResult> UpdateExam([FromRoute]Guid examId, [FromBody] RequestExam requestExam)
+        [Route("update")]
+        public async Task<IActionResult> UpdateExam([FromQuery]Guid examId, [FromBody] RequestExam requestExam)
         {
             await examService.UpdateExam(examId, requestExam);
             return Ok(new { message = "Exam updated successfully" });

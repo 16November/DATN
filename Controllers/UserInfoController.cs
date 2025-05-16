@@ -1,4 +1,5 @@
 ﻿using DoAnTotNghiep.Model;
+using DoAnTotNghiep.Services.IService;
 using DoAnTotNghiep.Services.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,9 +10,9 @@ namespace DoAnTotNghiep.Controllers
     [ApiController]
     public class UserInfoController : ControllerBase
     {
-        private readonly UserInfoService userInfoService;
+        private readonly IUserInfoService userInfoService;
 
-        public UserInfoController(UserInfoService userInfoService)
+        public UserInfoController(IUserInfoService userInfoService)
         {
             this.userInfoService = userInfoService;
         }
@@ -41,7 +42,7 @@ namespace DoAnTotNghiep.Controllers
 
         [HttpGet]
         [Route("getDetail")]
-        public async Task<ActionResult<UserInfo>> GetDetailUserInfo(Guid userId)
+        public async Task<ActionResult<UserInfo>> GetDetailUserInfo([FromQuery]Guid userId)
         {
             var userInfo = await userInfoService.GetDetailUserInfo(userId);
             

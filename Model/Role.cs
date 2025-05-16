@@ -8,7 +8,6 @@ namespace DoAnTotNghiep.Model
         [MaxLength(200)]
         public string Description { get; set; } = string.Empty;
 
-        // 1 Role có nhiều Users
-        public ICollection<User>? Users { get; set; }
+        public virtual ICollection<User>? Users { get; set; }
     }
 }

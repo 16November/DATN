@@ -11,21 +11,17 @@ namespace DoAnTotNghiep.Model
         [Required]
         public Guid UserId { get; set; }
 
-        public User? User { get; set; }
+        public virtual User? User { get; set; }
 
         [Required]
         public Guid ExamId { get; set; }
 
-        public Exam? Exam { get; set; }
+        public virtual Exam? Exam { get; set; }
 
-        public DateTime? StartTime { get; set; } 
-
-        public DateTime? SubmitTime { get; set; } // Thời điểm nộp bài
-
-        public double? Score { get; set; } // Điểm số nếu đã chấm
-
+        public DateTime? StartTime { get; set; }
+        public DateTime? SubmitTime { get; set; }
+        public double? Score { get; set; }
         public bool IsSubmitted { get; set; } = false;
-
         public bool IsStarted { get; set; } = false;
     }
 }

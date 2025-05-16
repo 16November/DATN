@@ -22,9 +22,24 @@ namespace DoAnTotNghiep.Repository.Repositories
 
         public async Task DeleteListAnswerAsync(Guid questionId)
         {
-            var questions = await dataContext.Answers.Where(x => x.QuestionId == questionId).ToListAsync();
+            var answers = await dataContext.Answers
+                        .Where(x => x.QuestionId == questionId)
+                        .ToListAsync();
 
-            await dataContext.BulkDeleteAsync(questions);
+            if (!answers.Any())
+                return;
+
+            // Lấy danh sách AnswerId
+            var answerIds = answers.Select(a => a.AnswerId).ToList();
+
+            // Kiểm tra nếu có UserAnswer liên quan
+            bool hasUserAnswer = await dataContext.UserAnswers
+                .AnyAsync(ua => ua!.AnswerId != null && answerIds.Contains(ua.AnswerId));
+
+            if (hasUserAnswer)
+                throw new InvalidOperationException("Không thể xóa vì một số câu trả lời đã được sử dụng trong bài làm.");
+
+            await dataContext.BulkDeleteAsync(answers);
         }
 
         public async Task SaveChangesAsync()

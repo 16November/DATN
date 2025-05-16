@@ -3,11 +3,12 @@ using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
 using DoAnTotNghiep.Repository.Repositories;
+using DoAnTotNghiep.Services.IService;
 using SequentialGuid;
 
 namespace DoAnTotNghiep.Services.Service
 {
-    public class UserExamService
+    public class UserExamService : IUserExamService
     {
         private readonly IUserExamRepository userExamRepository;
         private readonly IMapper mapper;

@@ -7,10 +7,14 @@ namespace DoAnTotNghiep.Model
     public class User : IdentityUser<Guid>
     {
         [Key]
-        public Guid UserId { 
+        public Guid UserId
+        {
             get => Id;
-            set => Id = value; }
+            set => Id = value;
+        }
 
-        public UserInfo? UserInfo { get; set; }
+        public virtual UserInfo? UserInfo { get; set; }
+        public virtual ICollection<UserExam> UserExams { get; set; } = new List<UserExam>();
+        public virtual ICollection<UserAnswer> UserAnswers { get; set; } = new List<UserAnswer>();
     }
 }

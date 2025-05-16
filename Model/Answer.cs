@@ -16,5 +16,7 @@ namespace DoAnTotNghiep.Model
         public Guid QuestionId { get; set; }
 
         public Question? Question { get; set; }
+
+        public ICollection<UserAnswer> UserAnswers { get; set; } = new List<UserAnswer>(); // Khởi tạo collection
     }
 }

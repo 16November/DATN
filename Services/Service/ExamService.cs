@@ -47,13 +47,15 @@ namespace DoAnTotNghiep.Services.Service
         }
 
 
-        public async Task AddExam(RequestExam requestExam)
+        public async Task<ExamDto> AddExam(RequestExam requestExam)
         {
-            var exam = mapper.Map<Exam>(requestExam);
-            exam.ExamId = (Guid)SequentialSqlGuidGenerator.Instance.NewSqlGuid();
-            exam.CreatedAt = DateTime.Now;
-            await examRepository.AddExamAsync(exam);
+            var examAdd = mapper.Map<Exam>(requestExam);
+            examAdd.ExamId = (Guid)SequentialSqlGuidGenerator.Instance.NewSqlGuid();
+            examAdd.CreatedAt = DateTime.UtcNow;
+            var exam = await examRepository.AddExamAsync(examAdd);
             await examRepository.SaveChangesAsync();
+            var examDto = mapper.Map<ExamDto>(exam);
+            return examDto;
         }
 
         public async Task DeleteExam(Guid examId)
@@ -65,7 +67,7 @@ namespace DoAnTotNghiep.Services.Service
         public async Task UpdateExam(Guid examId , RequestExam requestExam)
         {
             var exam = mapper.Map<Exam>(requestExam);
-            exam.UpdatedAt = DateTime.Now;
+            exam.UpdatedAt = DateTime.UtcNow;
             await examRepository.UpdateExamByExamId(examId, exam);
             await examRepository.SaveChangesAsync();
         }
@@ -90,6 +92,7 @@ namespace DoAnTotNghiep.Services.Service
         {
             var exam = await examRepository.GetExamByExamIdAsync (examId);
             var examDto = mapper.Map<ExamDto>(exam);
+            examDto.CountOfQuestions = exam.Questions.Count;
             return examDto;
         }
 

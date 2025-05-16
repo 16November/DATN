@@ -17,25 +17,21 @@ namespace DoAnTotNghiep.Model
         public string Description { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        public DateTime UpdatedAt { get; set; } 
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [Range(1, 1000)]
-        public int DurationInMinutes { get; set; } = 60; // mặc định 60 phút
+        public int DurationInMinutes { get; set; } = 60;
 
         public bool IsPublished { get; set; } = false;
-
-        public DateTime StartDay {  get; set; } 
+        public DateTime StartDay { get; set; }
 
         [Required]
-        public Guid CreatedByUserId { get; set; } // Giảng viên tạo đề
+        public Guid CreatedByUserId { get; set; }
 
         [ForeignKey("CreatedByUserId")]
-        public User? CreatedBy { get; set; }
+        public virtual User? CreatedBy { get; set; }
 
-        public ICollection<Question> Questions { get; set; } = new List<Question>();
-
-        public ICollection<UserExam> UserExams { get; set; } = new List<UserExam>();
-
+        public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+        public virtual ICollection<UserExam> UserExams { get; set; } = new List<UserExam>();
     }
 }

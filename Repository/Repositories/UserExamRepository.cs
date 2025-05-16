@@ -48,11 +48,25 @@ namespace DoAnTotNghiep.Repository.Repositories
         public async Task DeleteUserFromExam(Guid examId, Guid userId)
         {
             var userExam = await dataContext.UserExams
-                .FirstOrDefaultAsync(x => x.ExamId == examId && x.UserId == userId);
+                            .FirstOrDefaultAsync(x => x.ExamId == examId && x.UserId == userId);
 
             if (userExam == null)
             {
-                throw new KeyNotFoundException("UserExam not found");
+                throw new KeyNotFoundException("Không tìm thấy bản ghi UserExam.");
+            }
+
+            // Kiểm tra nếu người dùng đã làm bài
+            var questionIds = await dataContext.Questions
+                .Where(q => q.ExamId == examId)
+                .Select(q => q.QuestionId)
+                .ToListAsync();
+
+            var hasUserAnswers = await dataContext.UserAnswers
+                .AnyAsync(ua => ua.UserId == userId && questionIds.Contains(ua.QuestionId));
+
+            if (hasUserAnswers)
+            {
+                throw new InvalidOperationException("Không thể xóa người dùng khỏi đề thi vì đã có bài làm.");
             }
 
             dataContext.UserExams.Remove(userExam);

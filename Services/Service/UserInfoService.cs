@@ -3,26 +3,25 @@ using DoAnTotNghiep.Data;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
 using DoAnTotNghiep.Services.IService;
+using SequentialGuid;
 
 namespace DoAnTotNghiep.Services.Service
 {
     public class UserInfoService : IUserInfoService
     {
         private readonly IUserInfoRepository userInfoRepository;
-        private readonly DataContext dataContext;
-        private readonly IMapper mapper;
+        
 
 
-        public UserInfoService(IUserInfoRepository userInfoRepository, DataContext dataContext
-            ,IMapper mapper)
+        public UserInfoService(IUserInfoRepository userInfoRepository)
         {
             this.userInfoRepository = userInfoRepository;
-            this.dataContext = dataContext;
-            this.mapper = mapper;
+            
         }
 
         public async Task AddUserInfo(UserInfo userInfo)
         {
+            userInfo.UserInfoId = (Guid)SequentialSqlGuidGenerator.Instance.NewSqlGuid();
             await userInfoRepository.AddUserInfoAsync(userInfo);    
             await userInfoRepository.SaveChangesAsync();
         }

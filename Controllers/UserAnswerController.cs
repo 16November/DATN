@@ -18,6 +18,7 @@ namespace DoAnTotNghiep.Controllers
 
         // POST: api/useranswer
         [HttpPost]
+        [Route("add")]
         public async Task<IActionResult> AddUserAnswers([FromBody] List<UserAnswer> userAnswers)
         {
             await userAnswerService.AddListUserAnswer(userAnswers);
@@ -26,6 +27,7 @@ namespace DoAnTotNghiep.Controllers
 
         // GET: api/useranswer?userId=xxx&examId=xxx
         [HttpGet]
+        [Route("getList")]
         public async Task<IActionResult> GetUserAnswers([FromQuery] Guid userId, [FromQuery] Guid examId)
         {
             var result = await userAnswerService.GetListUserAnswer(userId, examId);

@@ -16,7 +16,7 @@ namespace DoAnTotNghiep.Dto.Response
         [StringLength(1000)]
         public string Description { get; set; } = string.Empty;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; }
 
@@ -26,6 +26,8 @@ namespace DoAnTotNghiep.Dto.Response
         public bool IsPublished { get; set; } = false;
 
         public DateTime StartDay { get; set; }
+
+        public int CountOfQuestions     { get; set; }
         public List<QuestionDto>? QuestionsDto { get; set; }
     }
 }

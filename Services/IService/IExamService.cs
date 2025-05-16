@@ -5,7 +5,7 @@ namespace DoAnTotNghiep.Services.IService
 {
     public interface IExamService
     {
-        Task AddExam(RequestExam requestExam);
+        Task<ExamDto> AddExam(RequestExam requestExam);
 
         Task DeleteExam(Guid examId);
 

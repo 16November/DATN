@@ -50,14 +50,25 @@ namespace DoAnTotNghiep.Repository.Repositories
 
         public async Task DeleteQuestionAsync(Guid questionId)
         {
-            var question = await dataContext.Questions.FirstOrDefaultAsync(x=> x.QuestionId == questionId);
+            var question = await dataContext.Questions
+                        .Include(q => q.Answers) 
+                        .FirstOrDefaultAsync(x => x.QuestionId == questionId);
 
             if (question == null)
             {
-                throw new KeyNotFoundException("Not found data about Question");
+                throw new KeyNotFoundException("Không tìm thấy dữ liệu về câu hỏi.");
             }
 
-            dataContext.Remove(question);
+            // Kiểm tra xem có UserAnswer liên quan không
+            bool hasUserAnswer = await dataContext.UserAnswers
+                .AnyAsync(ua => ua.QuestionId == questionId);
+
+            if (hasUserAnswer)
+            {
+                throw new InvalidOperationException("Không thể xóa câu hỏi vì đã có bài làm liên quan.");
+            }
+
+            dataContext.Questions.Remove(question);
             await dataContext.SaveChangesAsync();
         }
 
