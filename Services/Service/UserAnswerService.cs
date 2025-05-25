@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using DoAnTotNghiep.Data;
+using DoAnTotNghiep.Dto.Request;
 using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
 using DoAnTotNghiep.Services.IService;
+using Microsoft.Identity.Client;
 using Microsoft.VisualBasic;
 using SequentialGuid;
 
@@ -14,25 +16,37 @@ namespace DoAnTotNghiep.Services.Service
         private readonly IUserAnswerRepository userAnswerRepository;
         private readonly IMapper mapper;
         private readonly DataContext dataContext;
+        private readonly IUserExamRepository userExamRepository;    
 
-        public UserAnswerService(IUserAnswerRepository userAnswerRepository, IMapper mapper, DataContext dataContext)
+        public UserAnswerService(IUserAnswerRepository userAnswerRepository, IMapper mapper, DataContext dataContext
+            ,IUserExamRepository userExamRepository)
         {
             this.userAnswerRepository = userAnswerRepository;
             this.mapper = mapper;
             this.dataContext = dataContext;
+            this.userExamRepository = userExamRepository;
         }
 
-        public async Task AddListUserAnswer(List<UserAnswer> userAnswers)
+        public async Task<double> AddListUserAnswer(List<RequestUserAnswer> userAnswers,Guid userId,Guid examId)
         {
             using var transaction = await dataContext.Database.BeginTransactionAsync();
+            var userAnswerAdd = mapper.Map<List<UserAnswer>>(userAnswers);
             try
             {
-                foreach(var userAnswer in userAnswers)
+                foreach(var userAnswer in userAnswerAdd)
                 {
                     userAnswer.UserAnswerId = (Guid)SequentialSqlGuidGenerator.Instance.NewSqlGuid();
+                    userAnswer.UserId = userId;
+                    userAnswer.ExamId = examId;
                 }
-                await userAnswerRepository.AddListUserAnswer(userAnswers);
+                await userAnswerRepository.AddListUserAnswer(userAnswerAdd);
+
+                //UdpateSubmittedById
+                var score = await userExamRepository.UpdateSubmitedById(examId, userId);
+
                 await transaction.CommitAsync();
+                await userAnswerRepository.SaveChangesAsync();
+                return score;
             }
             catch(Exception)
             {
@@ -50,5 +64,7 @@ namespace DoAnTotNghiep.Services.Service
 
             return userAnswersDto;
         }
+
+       
     }
 }

@@ -19,5 +19,9 @@ namespace DoAnTotNghiep.Services.IService
 
         Task UpdatePublishedByExamId(Guid examId, bool isPublished);
 
+        Task<List<ExamDto>> GetAllExam(Guid userId);
+
+        Task<List<ExamDto>> GetAllExamUser(Guid userId);
+
     }
 }

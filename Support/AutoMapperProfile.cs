@@ -30,9 +30,13 @@ namespace DoAnTotNghiep.Support
             CreateMap<UserAnswer, UserAnswerDto>().
                 ForMember(dest => dest.AnswerDto, opt => opt.MapFrom(src => src.Answer));
 
+            CreateMap<RequestUserAnswer, UserAnswer>().ReverseMap();
+            //
+
+
             //UserExam
-            CreateMap<UserExam, UserExamDto>()
-                .ForMember(dest => dest.userInfoDto , opt => opt.MapFrom(src=> src.User!.UserInfo));
+            CreateMap<UserExam, UserExamDto>().ReverseMap();
+               
 
         }
     }

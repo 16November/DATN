@@ -1,4 +1,5 @@
-﻿using DoAnTotNghiep.Dto.Response;
+﻿using DoAnTotNghiep.Dto.Request;
+using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 
 namespace DoAnTotNghiep.Services.IService
@@ -11,10 +12,14 @@ namespace DoAnTotNghiep.Services.IService
 
         Task UpdateStatus(Guid userId, Guid examId, bool IsStarted);
 
-        Task UpdateSubmitedById(Guid examId, Guid userId);
+        Task<double> UpdateSubmitedById(Guid examId, Guid userId);
 
         Task<UserExamDto> GetDetailUserExam(Guid userExamId);
 
-        Task<List<UserExamDto>> GetListUserExam(Guid examId);
+        Task<List<StudentExam>> GetListUserExam(Guid examId);
+
+        Task AddUserToExam(RequestUserToExam request, Guid examId);
+
+        Task AddListUserToExam(List<RequestUserToExam> request, Guid examId);
     }
 }

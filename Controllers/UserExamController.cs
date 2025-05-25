@@ -1,4 +1,5 @@
-﻿using DoAnTotNghiep.Dto.Response;
+﻿using DoAnTotNghiep.Dto.Request;
+using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Services.IService;
 using DoAnTotNghiep.Services.Service;
@@ -11,32 +12,40 @@ namespace DoAnTotNghiep.Controllers
     [ApiController]
     public class UserExamController : ControllerBase
     {
-        private readonly IUserExamService _userExamService;
+        private readonly IUserExamService userExamService;
 
-        public UserExamController(UserExamService userExamService)
+        public UserExamController(IUserExamService userExamService)
         {
-            _userExamService = userExamService;
+            this.userExamService = userExamService;
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> AddUserToExam([FromBody] UserExam userExam)
+        public async Task<IActionResult> AddUserToExam([FromBody] RequestUserToExam request, [FromQuery]Guid examId)
         {
-            await _userExamService.AddUserToExamById(userExam);
+            await userExamService.AddUserToExam(request, examId);
             return Ok("User added to exam.");
         }
+
+        [HttpPost("addList")]
+        public async Task<IActionResult> AddListUserToExam([FromBody] List<RequestUserToExam> request, [FromQuery] Guid examId)
+        {
+            await userExamService.AddListUserToExam(request, examId);
+            return Ok("Users added to exam.");
+        }
+
 
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteUserFromExam([FromQuery] Guid examId, [FromQuery] Guid userId)
         {
-            await _userExamService.DeleteUserExam(examId, userId);
+            await userExamService.DeleteUserExam(examId, userId);
             return Ok("User removed from exam.");
         }
 
         [HttpPut]
         [Route("updateStatus")]
-        public async Task<IActionResult> UpdateStatus([FromQuery] Guid userId, [FromQuery] Guid examId, bool isStarted)
+        public async Task<IActionResult> UpdateStatus([FromQuery] Guid userId, [FromQuery] Guid examId, [FromQuery] bool isStarted)
         {
-            await _userExamService.UpdateStatus(userId, examId, isStarted);
+            await userExamService.UpdateStatus(userId, examId, isStarted);
             return Ok("Status updated.");
         }
 
@@ -44,15 +53,15 @@ namespace DoAnTotNghiep.Controllers
         [Route("updateSubmitted")]
         public async Task<IActionResult> UpdateSubmitted([FromQuery] Guid examId, [FromQuery] Guid userId)
         {
-            await _userExamService.UpdateSubmitedById(examId, userId);
-            return Ok("Submit status updated.");
+            var score = await userExamService.UpdateSubmitedById(examId, userId);
+            return Ok(score);
         }
 
         [HttpGet]
         [Route("getDetail")]
         public async Task<ActionResult<UserExamDto>> GetUserExamDetail([FromQuery]Guid userExamId)
         {
-            var result = await _userExamService.GetDetailUserExam(userExamId);
+            var result = await userExamService.GetDetailUserExam(userExamId);
             if (result == null)
                 return NotFound();
 
@@ -63,8 +72,10 @@ namespace DoAnTotNghiep.Controllers
         [Route("getList")]
         public async Task<ActionResult<List<UserExamDto>>> GetUserExamList([FromQuery]Guid examId)
         {
-            var result = await _userExamService.GetListUserExam(examId);
+            var result = await userExamService.GetListUserExam(examId);
             return Ok(result);
         }
+
+        
     }
 }

@@ -42,10 +42,26 @@ namespace DoAnTotNghiep.Controllers
         }
 
         [HttpGet]
-        [Route("getAll")]
+        [Route("getAllPagnigation")]
         public async Task<IActionResult> GetAllExamByManager([FromQuery]Guid userId, [FromQuery] int page = 1)
         {
             var exams = await examService.GetAllExamByManager(userId, page);
+            return Ok(exams);
+        }
+
+        [HttpGet]
+        [Route("getAll")]
+        public async Task<IActionResult> GetAllExam([FromQuery]Guid userId)
+        {
+            var exams = await examService.GetAllExam(userId);
+            return Ok(exams);
+        }
+
+        [HttpGet]
+        [Route("getAllUser")]
+        public async Task<IActionResult> GetAllExamByUser([FromQuery] Guid userId)
+        {
+            var exams = await examService.GetAllExamUser(userId);
             return Ok(exams);
         }
 
@@ -66,7 +82,7 @@ namespace DoAnTotNghiep.Controllers
         }
 
         [HttpPut]
-        [Route("updatePublished")]
+        [Route("updatePublished")]  
         public async Task<IActionResult> UpdatePublishedStatus([FromQuery]Guid examId, [FromQuery] bool isPublished)
         {
             await examService.UpdatePublishedByExamId(examId, isPublished);

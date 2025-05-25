@@ -1,4 +1,5 @@
-﻿using DoAnTotNghiep.Model;
+﻿using DoAnTotNghiep.Dto.Request;
+using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Services.IService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,10 +20,10 @@ namespace DoAnTotNghiep.Controllers
         // POST: api/useranswer
         [HttpPost]
         [Route("add")]
-        public async Task<IActionResult> AddUserAnswers([FromBody] List<UserAnswer> userAnswers)
+        public async Task<IActionResult> AddUserAnswers([FromBody] List<RequestUserAnswer> userAnswers, [FromQuery]Guid userId, [FromQuery]Guid examId)
         {
-            await userAnswerService.AddListUserAnswer(userAnswers);
-            return Ok(new { message = "Lưu câu trả lời thành công." });
+            var score = await userAnswerService.AddListUserAnswer(userAnswers,userId,examId);
+            return Ok(score);
         }
 
         // GET: api/useranswer?userId=xxx&examId=xxx

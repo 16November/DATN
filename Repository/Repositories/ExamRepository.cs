@@ -1,8 +1,11 @@
 ﻿using DoAnTotNghiep.Data;
+using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Runtime.CompilerServices;
 
 namespace DoAnTotNghiep.Repository.Repositories
 {
@@ -18,8 +21,8 @@ namespace DoAnTotNghiep.Repository.Repositories
         //Get ExamId
         public async Task<Exam> GetExamByExamIdAsync(Guid examId)
         {
-            var exam = await dataContext.Exams.Include(x=>x.Questions)
-                        .FirstOrDefaultAsync(x=> x.ExamId == examId);
+            var exam = await dataContext.Exams.Include(x => x.Questions)
+                        .FirstOrDefaultAsync(x => x.ExamId == examId);
 
             if (exam == null)
             {
@@ -30,7 +33,7 @@ namespace DoAnTotNghiep.Repository.Repositories
         }
 
         //Ap dung Giang Vien Nguoi Ra de
-        public async Task<List<Exam>> GetAllExamByManagerAsync(Guid userId,int page)
+        public async Task<List<Exam>> GetAllExamByManagerAsync(Guid userId, int page)
         {
             int take = 5;
             int skip = (page - 1) * take;
@@ -75,9 +78,9 @@ namespace DoAnTotNghiep.Repository.Repositories
             dataContext.Exams.Remove(exam);
         }
 
-        public async Task UpdateExamByExamId (Guid examId , Exam examUpdate)
+        public async Task UpdateExamByExamId(Guid examId, Exam examUpdate)
         {
-            var exam = await dataContext.Exams.FirstOrDefaultAsync(x=> x.ExamId == examId);
+            var exam = await dataContext.Exams.FirstOrDefaultAsync(x => x.ExamId == examId);
 
             if (exam == null)
             {
@@ -96,7 +99,7 @@ namespace DoAnTotNghiep.Repository.Repositories
         {
             var exam = await dataContext.Exams.FirstOrDefaultAsync(x => x.ExamId == examId);
 
-            if(exam == null)
+            if (exam == null)
             {
                 throw new KeyNotFoundException("Not find data to Update");
             }
@@ -138,6 +141,57 @@ namespace DoAnTotNghiep.Repository.Repositories
         public async Task SaveChangesAsync()
         {
             await dataContext.SaveChangesAsync();
+        }
+
+        public async Task<List<ExamDto>> GetAllExamAsync(Guid userId)
+        {
+            var exams = await dataContext.Exams
+                .Where(x => x.CreatedByUserId == userId)
+                .OrderByDescending(u => u.CreatedAt)
+                .Select(x => new ExamDto
+                {
+                    ExamId = x.ExamId,
+                    Title = x.Title,
+                    Description = x.Description,
+                    DurationInMinutes = x.DurationInMinutes,
+                    StartDay = x.StartDay,
+                    CreatedAt = x.CreatedAt,
+                    IsPublished = x.IsPublished,
+                    CountOfQuestions = x.Questions.Count,
+                })
+                .ToListAsync();
+            if (exams == null)
+            {
+                throw new KeyNotFoundException("Not find data about Exam");
+            }
+
+            return exams;
+        }
+
+        public async Task<List<ExamDto>> GetAllExamUserAsync(Guid userId)
+        {
+            var exams = await dataContext.UserExams
+                .Include(x => x.Exam)
+                .Where(x => x.UserId == userId && x.Exam != null)
+                .Select(x => new ExamDto
+                {
+                    ExamId = x.Exam!.ExamId,
+                    Title = x.Exam.Title,
+                    Description = x.Exam.Description,
+                    DurationInMinutes = x.Exam.DurationInMinutes,
+                    StartDay = x.Exam.StartDay,
+                    CreatedAt = x.Exam.CreatedAt,
+                    IsPublished = x.Exam.IsPublished,
+                    CountOfQuestions = x.Exam.Questions.Count,
+                })
+                .ToListAsync();
+            if(exams.Count == 0)
+            {
+                throw new KeyNotFoundException("Not find data about Exam");
+            }
+
+            return exams;
+           
         }
     }
 }

@@ -20,6 +20,7 @@ namespace DoAnTotNghiep.Model
         [Required]
         public Guid QuestionId { get; set; }
 
+        public Guid ExamId { get; set; }
         [ForeignKey("QuestionId")]
         public Question? Question { get; set; }
 

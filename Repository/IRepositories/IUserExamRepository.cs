@@ -1,4 +1,5 @@
-﻿using DoAnTotNghiep.Model;
+﻿using DoAnTotNghiep.Dto.Response;
+using DoAnTotNghiep.Model;
 
 namespace DoAnTotNghiep.Repository.IRepositories
 {
@@ -8,15 +9,17 @@ namespace DoAnTotNghiep.Repository.IRepositories
 
         Task AddUserToExamById(UserExam userExam);
 
-        Task UpdateSubmitedById(Guid examId, Guid userId);
+        Task<double> UpdateSubmitedById(Guid examId, Guid userId);
 
         Task UpdateStatusAsync(Guid userId, Guid examId, bool IsStarted);
 
         Task DeleteUserFromExam(Guid examId, Guid userId);
 
-        Task<List<UserExam>> GetListUserExam(Guid examId);
+        Task<List<StudentExam>> GetListUserExam(Guid examId);
 
         Task<UserExam> GetDetailUserExam(Guid userExamId);
+
+        Task AddListUserToExam(List<UserExam> userExams);
 
         
     }

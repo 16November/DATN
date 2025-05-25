@@ -1,6 +1,8 @@
 ﻿using DoAnTotNghiep.Data;
+using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DoAnTotNghiep.Repository.Repositories
@@ -19,7 +21,7 @@ namespace DoAnTotNghiep.Repository.Repositories
             await dataContext.UserExams.AddAsync(userExam);
         }
 
-        public async Task UpdateSubmitedById(Guid examId, Guid userId)
+        public async Task<double> UpdateSubmitedById(Guid examId, Guid userId)
         {
             var userExam = await dataContext.UserExams
                 .FirstOrDefaultAsync(x => x.ExamId == examId && x.UserId == userId);
@@ -30,6 +32,12 @@ namespace DoAnTotNghiep.Repository.Repositories
             }
 
             userExam.IsSubmitted = true;
+            userExam.IsStarted = false;
+            var score = await CalculateScoreAsync(userId, examId);
+            userExam.Score = score;
+            userExam.SubmitTime = DateTime.UtcNow;
+            return score;
+
         }
 
         public async Task UpdateStatusAsync(Guid userId, Guid examId, bool isStarted)
@@ -43,8 +51,25 @@ namespace DoAnTotNghiep.Repository.Repositories
             }
 
             userExam.IsStarted = isStarted;
+            
         }
 
+        public async Task<double> CalculateScoreAsync(Guid userId, Guid examId)
+        {
+            // Lấy tất cả các câu trả lời của người dùng cho bài thi
+            var userAnswers = await dataContext.UserAnswers
+                .Where(ua => ua.UserId == userId && ua.ExamId == examId)
+                .Include(ua => ua.Answer) // Include để truy cập IsCorrect
+                .ToListAsync();
+
+            // Tính điểm: 1 điểm cho mỗi câu trả lời đúng
+
+            var countQuestions = await dataContext.Questions.CountAsync(q => q.ExamId == examId);
+            double correctCount = userAnswers.Count(ua => ua.Answer != null && ua.Answer.IsCorrect);
+            double score = (correctCount / (double)countQuestions) * 10;
+            score = Math.Round(score, 2);
+            return score;
+        }
         public async Task DeleteUserFromExam(Guid examId, Guid userId)
         {
             var userExam = await dataContext.UserExams
@@ -72,25 +97,34 @@ namespace DoAnTotNghiep.Repository.Repositories
             dataContext.UserExams.Remove(userExam);
         }
 
-        public async Task<List<UserExam>> GetListUserExam(Guid examId)
+        public async Task<List<StudentExam>> GetListUserExam(Guid examId)
         {
-            var userExams = await dataContext.UserExams
-                .Where(x => x.ExamId == examId)
-                .ToListAsync();
-
-            if (userExams.Count == 0)
+            var userExam = await dataContext.UserExams
+                                .Where(x => x.ExamId == examId)
+                                .Join(
+                                    dataContext.UserInfos, // bang duoc join userInfo
+                                    x => x.UserId, // bang ngoai exam
+                                    ui => ui.UserId,
+                                    (x, ui) => new StudentExam()
+                                    {
+                                        FullName = ui.FullName,
+                                        MSSV = ui.MSSV,
+                                        score = x.Score ?? 0,
+                                        IsSubmitted = x.IsSubmitted,
+                                    }).ToListAsync();
+            if (userExam == null)
             {
-                throw new KeyNotFoundException("UserExam not found");
+                throw new KeyNotFoundException("Không tìm thấy danh sách UserExam.");
             }
 
-            return userExams;
+            return userExam;
         }
 
         public async Task<UserExam> GetDetailUserExam(Guid userExamId)
         {
             var userExam = await dataContext.UserExams
-                .Include(x=>x.User)
-                .ThenInclude(u=> u!.UserInfo)
+                .Include(x => x.User)
+                .ThenInclude(u => u!.UserInfo)
                 .FirstOrDefaultAsync(x => x.UserExamId == userExamId);
 
             if (userExam == null)
@@ -105,6 +139,13 @@ namespace DoAnTotNghiep.Repository.Repositories
         {
             await dataContext.SaveChangesAsync();
         }
-    }
 
+        public async Task AddListUserToExam(List<UserExam> userExams)
+        {
+            await dataContext.BulkInsertAsync(userExams, new BulkConfig
+            {
+                SetOutputIdentity = false,
+            });
+        }
+    }
 }

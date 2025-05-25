@@ -1,4 +1,5 @@
-﻿using DoAnTotNghiep.Model;
+﻿using DoAnTotNghiep.Dto.Request;
+using DoAnTotNghiep.Model;
 
 namespace DoAnTotNghiep.Repository.IRepositories
 {
@@ -13,5 +14,9 @@ namespace DoAnTotNghiep.Repository.IRepositories
         Task<UserInfo> GetDetailUserInfoAsync(Guid userId);
 
         Task SaveChangesAsync();
+
+        Task<List<UserInfo>> GetListUserInfo(List<RequestUserToExam> request);
+
+        Task<UserInfo> GetUserInfo(RequestUserToExam request);
     }
 }

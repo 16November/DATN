@@ -1,8 +1,10 @@
 ﻿using DoAnTotNghiep.Data;
+using DoAnTotNghiep.Dto.Request;
 using DoAnTotNghiep.Model;
 using DoAnTotNghiep.Repository.IRepositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using System.Linq;
 
 namespace DoAnTotNghiep.Repository.Repositories
 {
@@ -61,6 +63,31 @@ namespace DoAnTotNghiep.Repository.Repositories
         public async Task SaveChangesAsync()
         {
             await dataContext.SaveChangesAsync();
+        }
+
+        public async Task<List<UserInfo>> GetListUserInfo(List<RequestUserToExam> request)
+        {
+            var mssvList = request.Select(x => x.MSSV).ToList();
+            var nameList = request.Select(x => x.FullName).ToList();
+            var userInfos = await dataContext.UserInfos
+                            .Where(x => mssvList.Contains(x.MSSV) && nameList.Contains(x.FullName))
+                            .ToListAsync();
+            if (userInfos.Count == 0)
+            {
+                throw new KeyNotFoundException("Not found UserInfo");
+            }
+            return userInfos;
+        }
+
+        public async Task<UserInfo> GetUserInfo(RequestUserToExam request)
+        {
+            var userInfo = await dataContext.UserInfos
+                            .FirstOrDefaultAsync(x => x.MSSV == request.MSSV && x.FullName == request.FullName);
+            if (userInfo == null)
+            {
+                throw new KeyNotFoundException("Not found UserInfo");
+            }
+            return userInfo;
         }
     }
 }

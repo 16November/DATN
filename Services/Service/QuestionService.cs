@@ -60,12 +60,13 @@ namespace DoAnTotNghiep.Services.Service
             try
             {
                 var question = mapper.Map<Question>(questionUpdate);
+                Console.WriteLine(question);
                 await questionRepository.UpdateQuestionAsync(questionId, question);
 
                 var answers = await answerRepository.GetAnswersAsync(questionId);
                 foreach(var answer in answers)
                 {
-                    var answerUpdate = question.Answers!.FirstOrDefault(x=> x.AnswerId == answer.AnswerId);
+                    var answerUpdate = questionUpdate.Answers!.FirstOrDefault(x=> x.AnswerId == answer.AnswerId);
                     if(answerUpdate == null)
                     {
                         throw new KeyNotFoundException($"{answer.AnswerId}");

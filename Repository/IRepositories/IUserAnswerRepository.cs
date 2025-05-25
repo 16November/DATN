@@ -9,5 +9,7 @@ namespace DoAnTotNghiep.Repository.IRepositories
         Task<List<UserAnswer>> GetUserAnswersByUserId(Guid userId, Guid examId);
 
         Task SaveChangesAsync();
+
+        
     }
 }

@@ -1,4 +1,5 @@
-﻿using DoAnTotNghiep.Model;
+﻿using DoAnTotNghiep.Dto.Response;
+using DoAnTotNghiep.Model;
 using System.Threading.Tasks;
 
 namespace DoAnTotNghiep.Repository.IRepositories
@@ -20,5 +21,9 @@ namespace DoAnTotNghiep.Repository.IRepositories
         Task<List<Exam>> GetAllExamByTitle(string title);
 
         Task SaveChangesAsync();
+
+        Task<List<ExamDto>> GetAllExamAsync(Guid userId);
+
+        Task<List<ExamDto>> GetAllExamUserAsync(Guid userId);
     }
 }

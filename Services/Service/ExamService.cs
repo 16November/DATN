@@ -7,6 +7,7 @@ using SequentialGuid;
 using System.Net;
 using DoAnTotNghiep.Dto.Response;
 using DoAnTotNghiep.Services.IService;
+using Microsoft.VisualBasic;
 
 namespace DoAnTotNghiep.Services.Service
 {
@@ -103,7 +104,18 @@ namespace DoAnTotNghiep.Services.Service
 
         }
 
-        
+        public async Task<List<ExamDto>> GetAllExam(Guid userId)
+        {
+            var examsDto = await examRepository.GetAllExamAsync(userId);
+            
+            return  examsDto;
+        }
+
+        public async Task<List<ExamDto>> GetAllExamUser(Guid userId)
+        {
+            var examsDto = await examRepository.GetAllExamUserAsync(userId);
+            return examsDto;
+        }
 
     }
 }
