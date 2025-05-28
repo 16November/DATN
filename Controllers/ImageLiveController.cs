@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DoAnTotNghiep.Dto.Request;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DoAnTotNghiep.Controllers
@@ -11,36 +12,33 @@ namespace DoAnTotNghiep.Controllers
         public ImageLiveController(IWebHostEnvironment webHostEnvironment)
         {
             this.webHostEnvironment = webHostEnvironment;
-            
+
         }
 
         [HttpPost("imageReceive")]
         public async Task<IActionResult> ReceiveScreenshot(
-            [FromForm] IFormFile screenshoot,
-            [FromForm] string userId,
-            [FromForm] string examId,
-            [FromForm] DateTime timeStamp)
+            [FromForm] RequestScreenshot request) 
         {
-            if (screenshoot == null || screenshoot.Length == 0)
+            if (request.ScreenShot == null || request.ScreenShot.Length == 0)
             {
-                return BadRequest("Ảnh không hợp lệ");   
+                return BadRequest("Ảnh không hợp lệ");
             }
 
             var tempFolder = Path.Combine(webHostEnvironment.ContentRootPath, "TempScreenshoots");
             Directory.CreateDirectory(tempFolder);
 
-            var fileName = $"{userId}_{examId}_{timeStamp:yyyyMMdd_HHmmss}.jpg";
+            var fileName = $"{request.userId.ToString()}_{request.examId.ToString()}_{request.timeStamp:yyyyMMdd_HHmmss}.jpg";
             var filePath = Path.Combine(tempFolder, fileName);
-            
+
             //Lưu ảnh trên ổ đĩa  
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                await screenshoot.CopyToAsync(stream);
+                await request.ScreenShot.CopyToAsync(stream);
             }
 
             return Ok(new { message = "Ảnh đã được nhận thành công", filePath });
         }
 
-        
+
     }
 }

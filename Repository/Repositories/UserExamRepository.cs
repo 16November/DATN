@@ -147,5 +147,27 @@ namespace DoAnTotNghiep.Repository.Repositories
                 SetOutputIdentity = false,
             });
         }
+
+        public async Task<List<StudentExamInfo>> getListStudent(Guid examId)
+        {
+            var studentList = await dataContext.UserExams.Where(u => u.ExamId == examId)
+                                        .Join(dataContext.UserInfos,
+                                        ue => ue.UserId,
+                                        ui => ui.UserId,
+                                        (ue, ui) => new StudentExamInfo
+                                        {
+                                            UserId = ue.UserId,
+                                            MSSV = ui.MSSV,
+                                            FullName = ui.FullName,
+                                            IsStarted = ue.IsStarted
+                                        }).ToListAsync();
+
+            if (studentList.Count == 0)
+            {
+                throw new KeyNotFoundException("Khong co danh sach");
+            }
+
+            return studentList;
+        }
     }
 }

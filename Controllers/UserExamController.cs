@@ -70,12 +70,18 @@ namespace DoAnTotNghiep.Controllers
 
         [HttpGet]
         [Route("getList")]
-        public async Task<ActionResult<List<UserExamDto>>> GetUserExamList([FromQuery]Guid examId)
+        public async Task<ActionResult> GetUserExamList([FromQuery]Guid examId)
         {
             var result = await userExamService.GetListUserExam(examId);
             return Ok(result);
         }
 
-        
+        [HttpGet]
+        [Route("getListStudent")]
+        public async Task<IActionResult> GetListStudentFromExam([FromQuery]Guid examId)
+        {
+            var results = await userExamService.GetListStudentByExamId(examId);
+            return Ok(results); 
+        }
     }
 }

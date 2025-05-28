@@ -128,5 +128,11 @@ namespace DoAnTotNghiep.Services.Service
             await userExamRepository.SaveChangesAsync();
         }
 
+        public async Task<List<StudentExamInfo>> GetListStudentByExamId(Guid examId)
+        {
+            var studentList = await userExamRepository.getListStudent(examId);
+            return studentList;
+        }
+
     }
 }

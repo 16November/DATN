@@ -21,6 +21,9 @@ namespace DoAnTotNghiep.Repository.IRepositories
 
         Task AddListUserToExam(List<UserExam> userExams);
 
-        
+        Task<List<StudentExamInfo>> getListStudent(Guid examId);
+
+
+
     }
 }
