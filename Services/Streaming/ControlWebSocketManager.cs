@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging; // Đảm bảo đã include
 
 namespace DoAnTotNghiep.Services.Streaming
 {
-    public class ControlWebSocketManager : IDisposable
+    public class ControlWebSocketManager : IAsyncDisposable
     {
         private readonly ConcurrentDictionary<Guid, WebSocket> _controlConnections = new();
         private readonly ILogger<ControlWebSocketManager> _logger;
@@ -19,9 +19,18 @@ namespace DoAnTotNghiep.Services.Streaming
             _logger = logger;
         }
 
-        public void AddControlConnection(Guid userId, WebSocket webSocket)
+        public async Task AddControlConnectionAsync(Guid userId, WebSocket webSocket)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ControlWebSocketManager));
+
+            if (_controlConnections.TryGetValue(userId, out var existingSocket))
+            {
+                if (existingSocket.State == WebSocketState.Open)
+                {
+                    await existingSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Replacing connection", CancellationToken.None);
+                }
+                _controlConnections.TryRemove(userId, out _);
+            }
 
             if (_controlConnections.TryAdd(userId, webSocket))
             {
@@ -33,16 +42,20 @@ namespace DoAnTotNghiep.Services.Streaming
             }
         }
 
-        public void RemoveControlConnection(Guid userId)
+
+
+        public async Task RemoveControlConnectionAsync(Guid userId)
         {
             if (_controlConnections.TryRemove(userId, out var webSocket))
             {
                 _logger.LogInformation("Đã xóa kết nối Control WebSocket cho người dùng: {UserId}", userId);
                 try
                 {
-                    if (webSocket.State == WebSocketState.Open || webSocket.State == WebSocketState.CloseReceived)
+                    if (webSocket.State == WebSocketState.Open ||
+                        webSocket.State == WebSocketState.CloseReceived ||
+                        webSocket.State == WebSocketState.CloseSent)
                     {
-                        webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None).Wait();
+                        await webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
                     }
                     webSocket.Dispose();
                 }
@@ -52,6 +65,8 @@ namespace DoAnTotNghiep.Services.Streaming
                 }
             }
         }
+
+
 
         public async Task<bool> SendControlCommandAsync(Guid userId, string command)
         {
@@ -72,14 +87,14 @@ namespace DoAnTotNghiep.Services.Streaming
                     {
                         _logger.LogError(ex, "Lỗi khi gửi lệnh '{Command}' đến người dùng {UserId} qua Control WebSocket.", command, userId);
                         // Nếu gửi lỗi, có thể kết nối đã chết, hãy xóa nó
-                        RemoveControlConnection(userId);
+                        await RemoveControlConnectionAsync(userId);
                         return false;
                     }
                 }
                 else
                 {
                     _logger.LogWarning("Control WebSocket cho người dùng {UserId} không ở trạng thái Open. Trạng thái: {State}", userId, webSocket.State);
-                    RemoveControlConnection(userId); // Xóa kết nối không hợp lệ
+                    await RemoveControlConnectionAsync(userId); // Xóa kết nối không hợp lệ
                     return false;
                 }
             }
@@ -87,7 +102,7 @@ namespace DoAnTotNghiep.Services.Streaming
             return false;
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             if (_disposed) return;
             _disposed = true;
@@ -98,7 +113,7 @@ namespace DoAnTotNghiep.Services.Streaming
                 {
                     if (kvp.Value.State == WebSocketState.Open || kvp.Value.State == WebSocketState.CloseReceived)
                     {
-                        kvp.Value.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Application shutting down", CancellationToken.None).Wait(1000);
+                        await kvp.Value.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Application shutting down", CancellationToken.None);
                     }
                     kvp.Value.Dispose();
                 }
@@ -110,5 +125,6 @@ namespace DoAnTotNghiep.Services.Streaming
             _controlConnections.Clear();
             _logger.LogInformation("ControlWebSocketManager đã được dispose và tất cả kết nối đã đóng.");
         }
+
     }
 }

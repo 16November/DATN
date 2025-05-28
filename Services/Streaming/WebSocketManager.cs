@@ -84,63 +84,35 @@ namespace DoAnTotNghiep.Services.Streaming
             }
         }
 
-        public async Task HandleStudentStreamAsync(
-            WebSocket webSocket, 
-            Stream outputStream,
-            Guid connectionId,
-            CancellationToken cancellationToken)
+        public async Task HandleStudentStreamAsync(WebSocket webSocket, Stream pipeStream, string connectionId, CancellationToken cancellationToken)
         {
-            if (!_connections.TryGetValue(connectionId, out var connectionInfo))
-            {
-                throw new InvalidOperationException($"Connection {connectionId} not found");
-            }
-
             var buffer = new byte[8192];
-            var receiveBuffer = new ArraySegment<byte>(buffer);
 
             try
             {
-                while (!cancellationToken.IsCancellationRequested &&
-                       webSocket.State == WebSocketState.Open)
+                while (webSocket.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
                 {
-                    var result = await webSocket.ReceiveAsync(receiveBuffer, cancellationToken);
+                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
 
-                    switch (result.MessageType)
+                    if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        case WebSocketMessageType.Close:
-                            await webSocket.CloseAsync(
-                                WebSocketCloseStatus.NormalClosure,
-                                "Closed by client", 
-                                cancellationToken);
-                            return;
+                        break;
+                    }
 
-                        case WebSocketMessageType.Text:
-                            // Handle text messages (e.g., status updates)
-                            await HandleTextMessage(webSocket, buffer, result.Count, cancellationToken);
-                            break;
-
-                        case WebSocketMessageType.Binary:
-                            if (outputStream.CanWrite)
-                            {
-                                await outputStream.WriteAsync(
-                                    buffer.AsMemory(0, result.Count), 
-                                    cancellationToken);
-                                await outputStream.FlushAsync(cancellationToken);
-                            }
-                            break;
+                    if (result.Count > 0)
+                    {
+                        await pipeStream.WriteAsync(buffer, 0, result.Count, cancellationToken);
                     }
                 }
             }
-            catch (OperationCanceledException)
+            finally
             {
-                _logger.LogInformation("WebSocket operation cancelled for connection {ConnectionId}", connectionId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling WebSocket for connection {ConnectionId}", connectionId);
-                throw;
+                // Đóng PipeStream báo hiệu EOF cho FFmpeg
+                pipeStream.Dispose();
             }
         }
+
+
 
         private async Task HandleTextMessage(WebSocket webSocket, byte[] buffer, int count,
             CancellationToken cancellationToken)

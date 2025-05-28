@@ -207,7 +207,7 @@ namespace DoAnTotNghiep.Controllers
             var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             _logger.LogInformation("Control WebSocket accepted for user: {UserId}", userId);
 
-            _controlWebSocketManager.AddControlConnection(userId, webSocket);
+            await _controlWebSocketManager.AddControlConnectionAsync(userId, webSocket);
 
             var buffer = new byte[1024 * 4];
             try
@@ -218,14 +218,23 @@ namespace DoAnTotNghiep.Controllers
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        await webSocket.CloseAsync(result.CloseStatus ?? WebSocketCloseStatus.NormalClosure,
-                                                   result.CloseStatusDescription,
-                                                   CancellationToken.None);
-                        _logger.LogInformation("Control WebSocket for user {UserId} closed by client. Code: {CloseCode}, Reason: {CloseReason}", userId, result.CloseStatus, result.CloseStatusDescription);
+                        // Chỉ gọi CloseAsync nếu trạng thái hợp lệ
+                        if (webSocket.State == WebSocketState.Open ||
+                            webSocket.State == WebSocketState.CloseReceived ||
+                            webSocket.State == WebSocketState.CloseSent)
+                        {
+                            await webSocket.CloseAsync(
+                                result.CloseStatus ?? WebSocketCloseStatus.NormalClosure,
+                                result.CloseStatusDescription,
+                                CancellationToken.None);
+                        }
+
+                        _logger.LogInformation("Control WebSocket for user {UserId} closed by client. Code: {CloseCode}, Reason: {CloseReason}",
+                            userId, result.CloseStatus, result.CloseStatusDescription);
                         break;
                     }
 
-                    // Optional: Handle command from frontend
+                    // Xử lý các command từ frontend nếu cần
                 }
             }
             catch (WebSocketException ex) when (ex.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
@@ -238,13 +247,18 @@ namespace DoAnTotNghiep.Controllers
             }
             finally
             {
-                _controlWebSocketManager.RemoveControlConnection(userId);
+                await _controlWebSocketManager.RemoveControlConnectionAsync(userId);
 
-                try { webSocket.Dispose(); } catch { }
+                try
+                {
+                    webSocket.Dispose();
+                }
+                catch { }
             }
 
             return new EmptyResult();
         }
+
 
 
         [HttpGet("connections")]

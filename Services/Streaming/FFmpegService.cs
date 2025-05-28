@@ -7,18 +7,15 @@ namespace DoAnTotNghiep.Services.Streaming
     {
         private readonly ILogger<FFmpegService> _logger;
         private readonly string _ffmpegPath;
-        private readonly int _initTimeout = 15000; // 10 giây thay vì 30
+        private readonly int _initTimeout = 30000; // Tăng timeout lên 30s
 
         public FFmpegService(ILogger<FFmpegService> logger, IConfiguration configuration)
         {
             _logger = logger;
-            _ffmpegPath = configuration["FFmpeg:Path"] ?? "ffmpeg"; // Đường dẫn tới FFmpeg, mặc định là "ffmpeg"
+            _ffmpegPath = configuration["FFmpeg:Path"] ?? "ffmpeg";
         }
 
-        public async Task<(Process Process, string StreamUrl)> StartHlsProcess(
-            Guid studentId,
-            Stream inputStream,
-            CancellationToken cancellationToken)
+        public async Task<(Process Process, string StreamUrl)> StartHlsProcess(Guid studentId, Stream inputStream, CancellationToken cancellationToken)
         {
             var outputDirectory = Path.Combine(AppContext.BaseDirectory, "HLSStreams", studentId.ToString());
             EnsureDirectoryExists(outputDirectory);
@@ -26,15 +23,21 @@ namespace DoAnTotNghiep.Services.Streaming
             var processStartInfo = CreateProcessStartInfo(outputDirectory);
             var process = new Process { StartInfo = processStartInfo };
             var streamReady = new TaskCompletionSource<bool>();
+            var initializationTimeout = TimeSpan.FromSeconds(30);
 
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
                 {
                     _logger.LogInformation("FFmpeg: {Data}", e.Data);
-                    if (e.Data.Contains("segment") || e.Data.Contains("Opening"))
+                    if (e.Data.Contains("Opening") || e.Data.Contains("segment") || e.Data.Contains("muxer") || e.Data.Contains("hls"))
                     {
                         streamReady.TrySetResult(true);
+                    }
+                    if (e.Data.Contains("error") || e.Data.Contains("failed"))
+                    {
+                        _logger.LogError("FFmpeg error detected: {Error}", e.Data);
+                        streamReady.TrySetException(new InvalidOperationException($"FFmpeg error: {e.Data}"));
                     }
                 }
             };
@@ -44,45 +47,45 @@ namespace DoAnTotNghiep.Services.Streaming
                 process.Start();
                 process.BeginErrorReadLine();
 
-                // Copy input stream to FFmpeg
-                _ = Task.Run(async () =>
+                var copyTask = Task.Run(async () =>
                 {
                     try
                     {
                         using var ffmpegInput = process.StandardInput.BaseStream;
-                        await inputStream.CopyToAsync(ffmpegInput, cancellationToken);
+                        var buffer = new byte[65536];
+                        int bytesRead;
+                        while ((bytesRead = await inputStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+                        {
+                            await ffmpegInput.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                            await ffmpegInput.FlushAsync(cancellationToken);
+                        }
+                        ffmpegInput.Close();
+                        _logger.LogInformation("Finished copying stream data to FFmpeg for student {StudentId}", studentId);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error copying stream data");
+                        _logger.LogError(ex, "Error copying stream data for student {StudentId}", studentId);
                         streamReady.TrySetException(ex);
                     }
                 }, cancellationToken);
 
-                // Wait for stream initialization with timeout
                 using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                timeoutCts.CancelAfter(_initTimeout);
+                timeoutCts.CancelAfter(initializationTimeout);
 
-                try
-                {
-                    await streamReady.Task.WaitAsync(timeoutCts.Token);
+                await streamReady.Task.WaitAsync(timeoutCts.Token);
 
-                    var streamUrl = $"/streams/{studentId}/stream.m3u8";
-                    _logger.LogInformation("Stream started successfully for {StudentId}", studentId);
-
-                    return (process, streamUrl);
-                }
-                catch (OperationCanceledException)
-                {
-                    throw new TimeoutException($"Stream initialization timeout after {_initTimeout}ms");
-                }
+                var streamUrl = $"/streams/{studentId}/stream.m3u8";
+                _logger.LogInformation("Stream started successfully for student {StudentId}", studentId);
+                return (process, streamUrl);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to start FFmpeg process for student {StudentId}", studentId);
                 await StopProcessAsync(process);
                 throw;
             }
         }
+
 
         private ProcessStartInfo CreateProcessStartInfo(string outputDirectory)
         {
@@ -106,35 +109,64 @@ namespace DoAnTotNghiep.Services.Streaming
 
             try
             {
-                process.StandardInput.Close();
-                await Task.WhenAny(
-                    Task.Run(() => process.WaitForExit(3000)),
-                    Task.Delay(3000)
-                );
-                if (!process.HasExited)
+                // Đóng stdin trước để FFmpeg có thể kết thúc gracefully
+                try
                 {
-                    process.Kill(true);
+                    process.StandardInput?.Close();
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error closing FFmpeg stdin");
+                }
+
+                // Chờ process kết thúc một cách tự nhiên
+                var waitTask = Task.Run(() => process.WaitForExit(5000));
+                var timeoutTask = Task.Delay(5000);
+
+                var completedTask = await Task.WhenAny(waitTask, timeoutTask);
+
+                if (completedTask == timeoutTask && !process.HasExited)
+                {
+                    _logger.LogWarning("FFmpeg process did not exit gracefully, forcing kill");
+                    process.Kill(true);
+
+                    // Chờ thêm một chút sau khi kill
+                    await Task.Delay(1000);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error stopping FFmpeg process");
             }
             finally
             {
-                process.Dispose();
+                try
+                {
+                    process.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error disposing FFmpeg process");
+                }
             }
         }
 
         private static string BuildFFmpegArguments(string outputDirectory)
         {
+            // Tối ưu tham số FFmpeg cho streaming realtime
             return "-re " +
-                   "-f webm -fflags +discardcorrupt -i pipe:0 " +
+                   "-f webm -fflags +genpts+discardcorrupt -i pipe:0 " +
                    "-c:v libx264 -preset ultrafast -tune zerolatency " +
-                   "-c:a aac -b:a 128k -strict -2 " +
-                   "-f hls -hls_time 2 -hls_list_size 5 -hls_flags delete_segments " +
+                   "-profile:v baseline -level 3.0 " +
+                   "-pix_fmt yuv420p " +
+                   "-c:a aac -b:a 128k -ar 44100 -ac 2 " +
+                   "-f hls -hls_time 2 -hls_list_size 5 " +
+                   "-hls_flags delete_segments+round_durations+split_by_time " +
                    "-hls_segment_type mpegts " +
+                   "-hls_allow_cache 0 " +
                    $"-hls_segment_filename \"{Path.Combine(outputDirectory, "segment_%03d.ts")}\" " +
                    $"\"{Path.Combine(outputDirectory, "stream.m3u8")}\"";
         }
-
-
 
         private void EnsureDirectoryExists(string path)
         {
