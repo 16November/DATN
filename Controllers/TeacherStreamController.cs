@@ -126,12 +126,24 @@ namespace DoAnTotNghiep.Controllers
         [HttpGet("streaming/status/{streamId}")]
         public IActionResult GetStreamStatus(Guid streamId)
         {
-            var session = _teacherStreamService.GetActiveStreamSessionByStreamId(streamId);
-            if (session == null)
-                return NotFound(new { Message = "Stream session not found." });
+            try
+            {
+                var session = _teacherStreamService.GetActiveStreamSessionByStreamId(streamId);
+                if (session == null)
+                {
+                    Console.WriteLine($"Không tìm thấy session stream {streamId}.");
+                    return NotFound(new { Message = "Không tìm thấy session stream." });
+                }
 
-            return Ok(new { isReady = session.IsReady, isActive = session.IsActive });
+                return Ok(new { isReady = session.IsReady, isActive = session.IsActive });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi trong GetStreamStatus: {ex.Message}");
+                return StatusCode(500, new { Message = "Lỗi hệ thống", Details = ex.Message });
+            }
         }
+
 
         // WebSocket nhận stream dữ liệu từ học sinh (nếu middleware chưa xử lý thì dùng)
         [HttpGet("student/{streamId}/ws")]
