@@ -28,6 +28,7 @@ namespace DoAnTotNghiep.Data
 
         public DbSet<Role> AppRoles { get; set; }
 
+        public DbSet<CheatingEvent> CheatingEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

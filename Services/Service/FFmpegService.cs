@@ -20,22 +20,25 @@ namespace DoAnTotNghiep.Services.ServiceImplement
             string outputPath = Path.Combine(outputFolder, "playlist.m3u8");
 
             // Tối ưu cấu hình hls để giảm delay, tăng tương thích
-            return $"-f webm -i {inputPipePath} " +
+            return $"-f webm -i \"{inputPipePath}\" " +
                    "-c:v libx264 " +
-                   "-preset veryfast " + // Tối ưu preset cho tốc độ
-                   "-pix_fmt yuv420p " +
-                   "-g 50 " + // Số lượng keyframe phù hợp (giảm độ trễ)
+                   "-preset slow " + // Dùng preset "slow" để cải thiện chất lượng
+                   "-crf 18 " + // Tăng chất lượng video (crf thấp = chất lượng cao hơn)
+                   "-pix_fmt yuv420p " + // Đảm bảo định dạng màu sắc phù hợp
+                   "-s 1920x1080 " + // Tăng độ phân giải video lên 1080p
+                   "-b:v 2000k " + // Tăng bitrate video lên 3000k
+                   "-g 50 " + // Tăng độ phân giải keyframe
                    "-sc_threshold 0 " +
                    "-f hls " +
-                   "-hls_time 2 " + // Giảm thời gian mỗi segment để giảm độ trễ
+                   "-hls_time 1 " + // Giảm thời gian mỗi segment xuống 1 giây
                    "-hls_list_size 5 " +
                    "-hls_flags delete_segments+omit_endlist " +
-                   "-max_muxing_queue_size 1024 " + // Tăng kích thước queue để tránh lỗi buffer
-                   "-bufsize 1M " + // Giới hạn bộ đệm để giảm độ trễ
-                   "-b:v 1500k " + // Giảm bitrate video để giảm tải băng thông
-                   $"-hls_segment_type mpegts " + // Đảm bảo rằng đoạn video sử dụng mpegts cho độ tương thích tốt hơn
+                   "-max_muxing_queue_size 2048 " + // Tăng max_muxing_queue_size
+                   "-bufsize 2M " + // Tăng bộ đệm lên 2MB
+                   "-hls_segment_type mpegts " +
                    $"\"{outputPath}\"";
         }
+
 
 
         // Tạo Named Pipe trước khi start FFmpeg

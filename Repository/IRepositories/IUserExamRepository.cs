@@ -23,7 +23,7 @@ namespace DoAnTotNghiep.Repository.IRepositories
 
         Task<List<StudentExamInfo>> getListStudent(Guid examId);
 
-
+        Task<Stat> GetStatInformation(Guid userId);
 
     }
 }

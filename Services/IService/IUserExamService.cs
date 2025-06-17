@@ -23,5 +23,7 @@ namespace DoAnTotNghiep.Services.IService
         Task AddListUserToExam(List<RequestUserToExam> request, Guid examId);
 
         Task<List<StudentExamInfo>> GetListStudentByExamId(Guid examId);
+
+        Task<Stat> GetStat(Guid userId);
     }
 }

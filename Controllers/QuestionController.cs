@@ -18,7 +18,7 @@ namespace DoAnTotNghiep.Controllers
 
         [HttpGet]
         [Route("getByExamId")]
-        public async Task<IActionResult> GetQuestionsByExamId([FromQuery]Guid examId)
+        public async Task<IActionResult> GetQuestionsByExamId([FromQuery] Guid examId)
         {
             var result = await questionService.GetListQuestionByExamId(examId);
             return Ok(result);
@@ -26,7 +26,7 @@ namespace DoAnTotNghiep.Controllers
 
         [HttpGet]
         [Route("getDetail")]
-        public async Task<IActionResult> GetQuestionDetail([FromQuery]Guid questionId)
+        public async Task<IActionResult> GetQuestionDetail([FromQuery] Guid questionId)
         {
             var result = await questionService.GetQuestionDetailByQuestionId(questionId);
             return Ok(result);
@@ -40,7 +40,7 @@ namespace DoAnTotNghiep.Controllers
             return Ok(result);
         }
 
-        
+
         [HttpPost]
         [Route("add")]
         public async Task<IActionResult> AddQuestion([FromBody] RequestQuestion request)
@@ -49,7 +49,7 @@ namespace DoAnTotNghiep.Controllers
             return Ok(new { message = "Câu hỏi đã được thêm thành công." });
         }
 
-        
+
         [HttpPut]
         [Route("update")]
         public async Task<IActionResult> UpdateQuestion([FromQuery] Guid questionId, [FromBody] RequestQuestion request)
@@ -58,13 +58,21 @@ namespace DoAnTotNghiep.Controllers
             return Ok(new { message = "Câu hỏi đã được cập nhật thành công." });
         }
 
-        
+
         [HttpDelete]
         [Route("delete")]
-        public async Task<IActionResult> DeleteQuestion([FromQuery]Guid questionId)
+        public async Task<IActionResult> DeleteQuestion([FromQuery] Guid questionId)
         {
             await questionService.DeleteQuestion(questionId);
             return Ok(new { message = "Câu hỏi đã được xóa thành công." });
+        }
+
+        [HttpPost]
+        [Route("addList")]
+        public async Task<IActionResult> AddListQuestion([FromBody] List<RequestQuestion> requestQuestions, [FromQuery] Guid examId)
+        {
+            await questionService.AddListQuestionAsync(requestQuestions, examId);
+            return Ok(new { message = "Danh sách câu hỏi đã được thêm thành công." });
         }
     }
 }

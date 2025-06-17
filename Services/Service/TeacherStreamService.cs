@@ -465,5 +465,15 @@ namespace DoAnTotNghiep.Services.ServiceImplement
         {
             _fileAccessSemaphore?.Dispose();
         }
+
+        public async Task<Guid> getStudentIdByStreamId(Guid streamId)
+        {
+            if (_activeStreams.TryGetValue(streamId, out var session))
+            {
+                return session.UserId;
+            }
+            throw new KeyNotFoundException("Khong tim thay userId"); // Hoặc ném ngoại lệ nếu cần
+
+        }
     }
 }

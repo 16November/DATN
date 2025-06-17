@@ -134,5 +134,11 @@ namespace DoAnTotNghiep.Services.Service
             return studentList;
         }
 
+        public async Task<Stat> GetStat(Guid userId)
+        {
+            var stat = await  userExamRepository.GetStatInformation(userId);
+            return stat;
+        }
+
     }
 }

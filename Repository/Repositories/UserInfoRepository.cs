@@ -33,6 +33,7 @@ namespace DoAnTotNghiep.Repository.Repositories
 
             userInfo.MSSV = userInfoUpdate.MSSV;
             userInfo.FullName = userInfoUpdate.FullName;
+            userInfo.Email = userInfoUpdate.Email;
 
         }
 

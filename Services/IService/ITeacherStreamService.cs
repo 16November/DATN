@@ -13,6 +13,8 @@ namespace DoAnTotNghiep.Services.IService
         StreamSession? GetActiveStreamSessionByUserId(Guid userId);
         StreamSession? GetActiveStreamSessionByStreamId(Guid streamId);
 
+        Task<Guid> getStudentIdByStreamId(Guid streamId);
+
 
     }
 }

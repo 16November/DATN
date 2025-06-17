@@ -83,5 +83,13 @@ namespace DoAnTotNghiep.Controllers
             var results = await userExamService.GetListStudentByExamId(examId);
             return Ok(results); 
         }
+
+        [HttpGet]
+        [Route("getStat")]
+        public async Task<IActionResult> GetStat([FromQuery]Guid userId)
+        {
+            var stat = await userExamService.GetStat(userId);
+            return Ok(stat);
+        }
     }
 }

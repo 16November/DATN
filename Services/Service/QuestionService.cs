@@ -8,6 +8,7 @@ using DoAnTotNghiep.Services.IService;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Identity.Client;
 using SequentialGuid;
+using System.Net;
 using System.Transactions;
 
 namespace DoAnTotNghiep.Services.Service
@@ -149,6 +150,39 @@ namespace DoAnTotNghiep.Services.Service
         {
             await questionRepository.DeleteQuestionAsync(questionId);
             await questionRepository.SaveChangesAsync();
+        }
+
+        public async Task<List<ErrorQuestionAdd>> AddListQuestionAsync(List<RequestQuestion> requestQuestions, Guid examId)
+        { 
+            var questionError = new List<ErrorQuestionAdd>();
+            try
+            {
+                foreach (var question in requestQuestions)
+                {
+                    try
+                    {
+                        Validate(question);
+                        question.ExamId = examId;
+                        await AddQuestionAsync(question);
+                    }
+                    catch (Exception ex)
+                    {
+                        var error = new ErrorQuestionAdd
+                        {
+                            QuestionContent = question.Content,
+                        };
+                        questionError.Add(error);
+                        continue;
+                    }
+
+                }
+
+                return questionError;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Lỗi khi thêm danh sách câu hỏi", ex);
+            }
         }
     }
 }

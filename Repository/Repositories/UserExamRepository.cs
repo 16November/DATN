@@ -107,10 +107,13 @@ namespace DoAnTotNghiep.Repository.Repositories
                                     ui => ui.UserId,
                                     (x, ui) => new StudentExam()
                                     {
+                                        UserId = x.UserId,
                                         FullName = ui.FullName,
                                         MSSV = ui.MSSV,
                                         score = x.Score ?? 0,
                                         IsSubmitted = x.IsSubmitted,
+                                        SubmitDay = (DateTime)x.SubmitTime! ,
+                                        StartDat = (DateTime)x.StartTime!
                                     }).ToListAsync();
             if (userExam == null)
             {
@@ -168,6 +171,29 @@ namespace DoAnTotNghiep.Repository.Repositories
             }
 
             return studentList;
+        }
+
+        public async Task<Stat> GetStatInformation(Guid userId)
+        {
+            var examId = await dataContext.Exams
+                                .Where(x => x.CreatedByUserId == userId)
+                                .Select(
+                                    x=> x.ExamId
+                                ).ToListAsync();
+
+            var userExam = await dataContext.UserExams
+                                    .Where(x => examId.Contains(x.ExamId))
+                                    .Select(x => x.UserId)
+                                    .Distinct()
+                                    .ToListAsync();
+
+            var stat = new Stat()
+            {
+                countOfExam = examId.Count,
+                countOfStudent = userExam.Count
+            };
+
+            return stat;
         }
     }
 }

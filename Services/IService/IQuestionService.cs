@@ -16,5 +16,7 @@ namespace DoAnTotNghiep.Services.IService
         Task UpdateQuestionAsync(Guid questionId, RequestQuestion questionUpdate);
 
         Task DeleteQuestion(Guid questionId);
+
+        Task<List<ErrorQuestionAdd>> AddListQuestionAsync(List<RequestQuestion> requestQuestions, Guid examId);
     }
 }

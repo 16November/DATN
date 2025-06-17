@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -80,6 +81,18 @@ namespace DoAnTotNghiep.Services.Service
                 foreach (var connId in connections)
                 {
                     await Clients.Client(connId).SendAsync("ReceiveStreamUrl", streamInfo);
+                }
+            }
+        }
+
+        //Thong bao dung stream to đến student
+        public async Task NotifyStudentStopStudent(Guid studentId)
+        {
+            if (UserConnections.TryGetValue(studentId, out var connections))
+            {
+                foreach (var connId in connections)
+                {
+                    await Clients.Client(connId).SendAsync("ReceiveStopStream");
                 }
             }
         }

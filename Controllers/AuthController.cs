@@ -8,6 +8,8 @@ using DoAnTotNghiep.Dto.Request;
 using SequentialGuid;
 using DoAnTotNghiep.Dto.Response;
 using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace DoAnTotNghiep.Controllers
 {
@@ -119,6 +121,67 @@ namespace DoAnTotNghiep.Controllers
         //    }
         //    return BadRequest(ModelState);
         //}
+
+        [HttpPost]
+        [Route("changePassword")]
+        public async Task<IActionResult> ChangePassWord([FromBody] Dto.Request.ChangePasswordRequest request)
+        {
+            var user = await userManager.FindByIdAsync(request.UserId);
+
+            if (user != null)
+            {
+                var result = await userManager.ChangePasswordAsync(user, request.OldPassword, request.Password);
+                if (result.Succeeded)
+                {
+                    return Ok("Change Password sucessful");
+                }
+            }
+
+            return BadRequest("Change Password Fails");
+        }
+
+        [HttpPost]
+        [Route("resetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] Dto.Request.ResetPasswordRequest request)
+        {
+            var user = await userManager.FindByNameAsync(request.UserName);
+
+            if (user != null)
+            {
+                var result = await userManager.ResetPasswordAsync(user, request.Token, request.Password);
+                if (result.Succeeded)
+                {
+                    return Ok("Reset Password Sucessfully");
+                }
+
+            }
+
+            return BadRequest("Change Password Sucess");
+        }
+
+        [HttpPost]
+        [Route("sendEmail")]
+        public async Task<IActionResult> SendEmalRequest([FromBody] SendEmailRequest request)
+        {
+            var user = await userManager.FindByNameAsync(request.UserName);
+
+            if (user != null)
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+                var subject = "Reset PassWord with Token";
+                var body = "Copy this token to reset and it has 10 limit \n" + token;  
+
+                var result = await tokenService.SendEmail(request.Email,subject,body);
+                if (result)
+                {
+                    return Ok("Send gmail sucessfully");
+                }
+            }
+
+            return BadRequest();
+
+        }
 
     }
 }

@@ -73,18 +73,48 @@ namespace DoAnTotNghiep.Controllers
         {
             try
             {
+                var studentId = await _teacherStreamService.getStudentIdByStreamId(streamId);
+                if (studentId == Guid.Empty)
+                {
+                    return NotFound(new { Message = "Không tìm thấy học sinh cho stream này." });
+                }
                 var result = await _teacherStreamService.StopStudentShareAsync(streamId);
-                if (result)
-                    return Ok(new { Message = "Stopped successfully" });
-                else
-                    return NotFound(new { Message = "Stream not found or already stopped" });
+
+                if (!result)
+                {
+                    // Nếu không tìm thấy stream hoặc stream đã dừng
+                    return NotFound(new { Message = "Stream không tìm thấy hoặc đã dừng." });
+                }
+                var connectionIds = NotificationHub.GetConnectionIdsStatic(studentId);
+
+                if (connectionIds == null || !connectionIds.Any())
+                {
+                    return NotFound(new { Message = "Không có kết nối nào cho học sinh này." });
+                }
+
+                foreach (var connectionId in connectionIds)
+                {
+                    try
+                    {
+                        await _notificationHub.Clients.Client(connectionId)
+                            .SendAsync("ReceiveStopShare", new { Message = "Giáo viên đã dừng stream" });
+                    }
+                    catch (Exception notificationEx)
+                    {
+                        Console.WriteLine($"Lỗi khi gửi thông báo đến client {connectionId}: {notificationEx.Message}");
+                        // Log lỗi cụ thể khi thông báo đến kết nối không thành công
+                    }
+                }
+
+                return Ok(new { Message = "Stream của giáo viên đã dừng và thông báo đã được gửi đến học sinh." });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in StopShare: {ex.Message}");
-                return StatusCode(500, new { Message = "Internal server error", Details = ex.Message });
+                Console.WriteLine($"Lỗi trong StopShare: {ex.Message}");
+                return StatusCode(500, new { Message = "Lỗi hệ thống", Details = ex.Message });
             }
         }
+
 
         // API lấy session đang active theo userId (kiểm tra trạng thái hoặc lấy info stream)
         [HttpGet("streaming/session")]
